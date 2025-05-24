@@ -116,6 +116,11 @@ const uint8_t MAC_FLOW_VALVE[6] = {0x02, 0x46, 0x4C,
                                    0x00, 0x00, 0x03}; // FL:  flow valve
 const uint8_t MAC_SENSOR_GIGA[6] = {0x02, 0x53, 0x49,
                                     0x00, 0x00, 0x04}; // SI:  sensor interface
+
+// Change this based on which board is used as flight computer.
+#define MAC_SENSOR_DATA MAC_SENSOR_GIGA
+#define MAC_FLOW_CONTROLLER MAC_SENSOR_GIGA
+
 byte pkt[] = {
     0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, // destination
     0x11, 0x22, 0x33, 0x44, 0x55, 0x66, // source
@@ -558,7 +563,7 @@ void sendRocketState(uint8_t currRocketState)
   }
 
   // --- 2) Flow-valve Arduino ---------------------------------------------
-  memcpy(pkt, MAC_FLOW_VALVE, 6); // destination
+  memcpy(pkt, MAC_FLOW_CONTROLLER, 6); // destination
   // source MAC is already correct, no need to write again
   if (w5500.sendFrame(pkt, sizeof(pkt)) < 0)
   {
@@ -599,48 +604,6 @@ void sendRocketState(uint8_t currRocketState)
  *
  * Example payload: "512.0,511.8,509.6,511.1,510.2"
  */
-// void receiveSensorData()
-// {
-//   uint16_t len = w5500.readFrame(buffer, sizeof(buffer));
-//   if (len < 15)
-//   { // too short to be valid
-//     return;
-//   }
-
-//   /* --- 1) Check that this is a telemetry frame we care about ----------- */
-//   const bool is_sensor_frame =
-//       buffer[12] == 0x88 && buffer[13] == 0x89 &&  // ethertype
-//       memcmp(buffer + 6, MAC_FLOW_VALVE, 6) == 0; // source MAC is from flow (UNO)
-
-//   if (!is_sensor_frame)
-//   {
-//     // Serial.println("non sensor");
-//     return; // something else (e.g., valve-state echo) – ignore
-//   }
-
-//   /* --- 2) Copy the ASCII payload into a NUL-terminated char array ------ */
-//   const uint16_t payloadLen = len - 14; // strip MAC + type
-//   static char csv[256];                 // plenty for a short CSV line
-//   if (payloadLen >= sizeof(csv))
-//   {
-//     // Serial.println(F("Telemetry frame too long – dropped"));
-//     return;
-//   }
-//   memcpy(csv, buffer + 14, payloadLen);
-//   csv[payloadLen] = '\0'; // make it a C-string
-
-//   /* --- 3) Print (or parse) -------------------------------------------- */
-//   // Serial.print(F("[Telemetry] ")); // simple pass-through
-//   Serial.println(csv);
-
-//   /*  Optional: quick CSV tokenisation
-//       char *tok = strtok(csv, ",");
-//       while (tok) {
-//         Serial.println(String(tok).toFloat(), 3);
-//         tok = strtok(nullptr, ",");
-//       }
-//   */
-// }
 void receiveSensorData()
 {
   uint16_t len = w5500.readFrame(buffer, sizeof(buffer));
@@ -649,7 +612,7 @@ void receiveSensorData()
   /* 1) Only accept telemetry frames from the flight computer */
   const bool is_sensor_frame =
       buffer[12] == 0x88 && buffer[13] == 0x89 &&
-      memcmp(buffer + 6, MAC_FLOW_VALVE, 6) == 0;
+      memcmp(buffer + 6, MAC_SENSOR_DATA, 6) == 0;
 
   if (!is_sensor_frame) return;
 
