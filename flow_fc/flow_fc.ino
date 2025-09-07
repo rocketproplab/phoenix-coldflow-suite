@@ -1,6 +1,6 @@
 #include "w5500.h"
 
-// timing
+// timing for solenoids
 const unsigned long OPEN_MILLIS = 500;
 
 // bit‑masks for each valve in the 7‑bit rocket state

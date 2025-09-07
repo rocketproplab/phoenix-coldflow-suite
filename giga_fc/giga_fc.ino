@@ -5,7 +5,7 @@
 
 //Ethernet Lib
 #include "w5500.h"
-#include <SD.h>
+// #include <SD.h>
 //Load Cell Lib
 #include "HX711.h"
 //Thermocouple Libs
@@ -20,7 +20,7 @@
 
 //Pin Definitions **********************************************
 //Ethernet CS
-#define EthernetCS 42
+#define EthernetCS 10
 #define SDCS 40
 
 //Load Cell Pins
@@ -58,7 +58,7 @@ HX711 loadCell3;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature thermoCouples(&oneWire);
 DeviceAddress addr;
-Adafruit_MCP9600 mcp;
+// Adafruit_MCP9600 mcp;
 
 //Other Consts ***************************************************
 float calibration_factor1 = -7050; //-7050 worked for my 440lb max scale setup
@@ -70,7 +70,7 @@ Ambient_Resolution ambientRes = RES_ZERO_POINT_0625;
 void setup() {
   Serial.begin(9600);
    //ethernet setup
-  w5500.begin(MAC_SENSOR_GIGA);
+  // w5500.begin(MAC_SENSOR_GIGA);
   //software SPI setup
   /*
   SPI.begin();

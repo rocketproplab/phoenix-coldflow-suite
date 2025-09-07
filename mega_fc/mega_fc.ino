@@ -52,13 +52,13 @@ const uint8_t LOX_FLOW_MASK = 0b0000010;
 const uint8_t LOX_VENT_MASK = 0b0000001;
 
 // PWM pins for solenoids
-const uint8_t GN2_LNG_FLOW_PIN = 6; // confirmed
-const uint8_t GN2_LOX_FLOW_PIN = 5; // confirmed
+const uint8_t GN2_LNG_FLOW_PIN = 8; // confirmed 
+const uint8_t GN2_LOX_FLOW_PIN = 9; // confirmed
 const uint8_t GN2_VENT_PIN = 4;
-const uint8_t LNG_FLOW_PIN = 3; // confirmed
-const uint8_t LNG_VENT_PIN = 7;
-const uint8_t LOX_FLOW_PIN = 9; // confirmed
-const uint8_t LOX_VENT_PIN = 8;
+const uint8_t LNG_FLOW_PIN = 7; // confirmed 
+const uint8_t LNG_VENT_PIN = 3;
+const uint8_t LOX_FLOW_PIN = 10; // confirmed 
+const uint8_t LOX_VENT_PIN = 6;
 
 // first byte 0x02 = locally‑administered, unicast
 const uint8_t MAC_GROUND_STATION[6] = {0x02, 0x47, 0x53,
@@ -107,6 +107,7 @@ TelemetryFrame f;
 //object creation **********************************************
 //Ethernet
 Wiznet5500 w5500;
+unsigned long lastSend = 0;
 //Load Cells
 HX711 loadCell1;
 HX711 loadCell2;
@@ -125,7 +126,7 @@ float calibration_factor3 = -7050; //-7050 worked for my 440lb max scale setup
 Ambient_Resolution ambientRes = RES_ZERO_POINT_0625;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // if (!SD.begin(SDCS)) {
   //   Serial.println("initialization failed!");
@@ -143,27 +144,27 @@ void setup() {
 
   
   //ethernet setup
-  // w5500.begin(MAC_SENSOR_GIGA);
-  // Serial.println("Ethernet Setup Complete");
+  w5500.begin(MAC_SENSOR_GIGA);
+  Serial.println("Ethernet Setup Complete");
   //load cell setup
-  loadCell1.begin(DOUT1, CLK1);
-  loadCell1.set_scale();
-  loadCell1.tare(); //Reset the scale to 0
-  Serial.println("Load 1 Done");
+  // loadCell1.begin(DOUT1, CLK1);
+  // loadCell1.set_scale();
+  // loadCell1.tare(); //Reset the scale to 0
+  // Serial.println("Load 1 Done");
   
-  loadCell2.begin(DOUT2, CLK2);
-  loadCell2.set_scale();
-  loadCell2.tare(); //Reset the scale to 0
-  Serial.println("Load 2 Done");
+  // loadCell2.begin(DOUT2, CLK2);
+  // loadCell2.set_scale();
+  // loadCell2.tare(); //Reset the scale to 0
+  // Serial.println("Load 2 Done");
 
-  loadCell3.begin(DOUT3, CLK3);
-  loadCell3.set_scale();
-  loadCell3.tare(); //Reset the scale to 0
-  Serial.println("Load 3 Done");
+  // loadCell3.begin(DOUT3, CLK3);
+  // loadCell3.set_scale();
+  // loadCell3.tare(); //Reset the scale to 0
+  // Serial.println("Load 3 Done");
 
   //thermocouple setup
   
-  thermoCouples.begin();
+  // thermoCouples.begin();
 /*
   if (! mcp.begin(I2C_ADDRESS)) {
     Serial.println("Sensor not found. Check wiring!");
@@ -178,8 +179,8 @@ void setup() {
 }
 
 void receiveRocketState() {
-  uint16_t len = w5500.readFrame(buffer, sizeof(buffer));
-  if (len > 0) {
+  uint16_t len;
+  while ((len = w5500.readFrame(buffer, sizeof(buffer))) > 0){
     if (buffer[12] != 0x63 || buffer[13] != 0xe4)
       return;
     uint8_t newState = buffer[14];
@@ -228,31 +229,37 @@ void applyValveVoltages() {
 
 void sendSensorData() {
   double PT1_a = analogRead(A0) / 1023.0 * 5.0;
-  double PT1 = ((PT1_a - 0.5) / (4.5 - 0.5)) * 5000;
+  double PT1 = ((PT1_a - 0.5) / (4.5 - 0.5)) * 5000 - 40.93;
   double PT2_a = analogRead(A1) / 1023.0 * 5.0;
-  double PT2 = ((PT2_a - 1) / (5.0 - 1.0)) * 1000;
+  double PT2 = ((PT2_a - 1) / (5.0 - 1.0)) * 1000 -15.15;
   double PT3_a = analogRead(A2) / 1023.0 * 5.0;
-  double PT3 = ((PT3_a - 1) / (5.0 - 1.0)) * 1000;
+  double PT3 = ((PT3_a - 1) / (5.0 - 1.0)) * 1000-15.15;
   double PT4_a = analogRead(A3) / 1023.0 * 5.0;
-  double PT4 = ((PT4_a - 1) / (5.0 - 1.0)) * 1000;
+  double PT4 = ((PT4_a - 1) / (5.0 - 1.0)) * 1000-15.15;
   double PT5_a = analogRead(A4) / 1023.0 * 5.0;
-  double PT5 = ((PT5_a - 1) / (5.0 - 1.0)) * 1000;
+  double PT5 = ((PT5_a - 1) / (5.0 - 1.0)) * 1000-15.15;
+  
 
   // LOAD CELL CALIBRATION
-  loadCell1.set_scale(calibration_factor1); // Adjust to this calibration factor
-  loadCell2.set_scale(calibration_factor2); // Adjust to this calibration factor
-  loadCell3.set_scale(calibration_factor3); // Adjust to this calibration factor
+  // loadCell1.set_scale(calibration_factor1); // Adjust to this calibration factor
+  // loadCell2.set_scale(calibration_factor2); // Adjust to this calibration factor
+  // loadCell3.set_scale(calibration_factor3); // Adjust to this calibration factor
 
   // LOAD CELL DATA
-  double loadOutput1 = loadCell1.get_units();
-  double loadOutput2 = loadCell2.get_units();
-  double loadOutput3 = loadCell3.get_units();
+  // double loadOutput1 = loadCell1.get_units();
+  // double loadOutput2 = loadCell2.get_units();
+  // double loadOutput3 = loadCell3.get_units();
+  double loadOutput1 = 0;
+  double loadOutput2 = 0;
+  double loadOutput3 = 0;
 
   // THERMOCOUPLE DATA
 
-  thermoCouples.requestTemperatures();
-  double thermoCouple1 = thermoCouples.getTempCByIndex(0);
-  double thermoCouple2 = thermoCouples.getTempCByIndex(1);
+  // thermoCouples.requestTemperatures();
+  // double thermoCouple1 = thermoCouples.getTempCByIndex(0);
+  // double thermoCouple2 = thermoCouples.getTempCByIndex(1);
+  double thermoCouple1 = 0;
+  double thermoCouple2 = 0;
   // double thermoCouple3=thermoCouples.getTempCByIndex(2);
 
   // LIVE ETHERNET TRANSMISSION
@@ -262,11 +269,18 @@ void sendSensorData() {
   // String
   // dataOut=String(loadOutput1)+","+String(loadOutput2)+","+String(loadOutput3)+","+String(thermoCouple1)+","+String(thermoCouple2);
 
+  
   String dataOut = String(PT1) + "," + String(PT2) + "," + String(PT3) + "," +
                    String(PT4) + "," + String(PT5) + "," + String(loadOutput1) +
                    "," + String(loadOutput2) + "," + String(loadOutput3) + "," +
                    String(thermoCouple1) + "," + String(thermoCouple2);
-  Serial.println(dataOut);
+                   
+  // String dataOut = String(PT1_a) + ","
+  //                + String(PT2_a) + ","
+  //                + String(PT3_a) + ","
+  //                + String(PT4_a) + ","
+  //                + String(PT5_a) + ",";
+  //Serial.println(dataOut);
 
   // Send data
 
@@ -283,12 +297,13 @@ void sendSensorData() {
   memcpy(f.srcMac, MAC_SENSOR_GIGA, 6);
   ((byte *)&f)[12] = 0x88;
   ((byte *)&f)[13] = 0x89;
-  Serial.print("Data len: ");
-  Serial.println(len);
+  // Serial.print("Data len: ");
+  // Serial.println(len);
   memcpy(f.payload, data, len);
   if (w5500.sendFrame((byte *)&f, sizeof(f)) <= 0) {
     Serial.println("Ethernet send Failed");
   }
+  
   // myFile = SD.open("StaticFire.txt", FILE_WRITE);
   // if (myFile) {
   //   Serial.print("Writing to file...");
@@ -304,8 +319,13 @@ void sendSensorData() {
 
 void loop() {
   receiveRocketState();
+  // Serial.println("Received");
   updateValveStates();
+  // Serial.println("Updated");
   applyValveVoltages();
-  sendSensorData();
-  delay(100);
+  // Serial.println("Applied");
+  if (millis() - lastSend >= 200) {
+    lastSend = millis();
+    sendSensorData();
+  }
 }
