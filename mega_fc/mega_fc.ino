@@ -229,15 +229,15 @@ void applyValveVoltages() {
 
 void sendSensorData() {
   double PT1_a = analogRead(A0) / 1023.0 * 5.0;
-  double PT1 = ((PT1_a - 0.5) / (4.5 - 0.5)) * 5000 - 40.93;
+  double PT1 = ((PT1_a - 0.5) / (4.5 - 0.5)) * 5000;
   double PT2_a = analogRead(A1) / 1023.0 * 5.0;
-  double PT2 = ((PT2_a - 1) / (5.0 - 1.0)) * 1000 -15.15;
+  double PT2 = ((PT2_a - 1) / (5.0 - 1.0)) * 1000;
   double PT3_a = analogRead(A2) / 1023.0 * 5.0;
-  double PT3 = ((PT3_a - 1) / (5.0 - 1.0)) * 1000-15.15;
+  double PT3 = ((PT3_a - 1) / (5.0 - 1.0)) * 1000;
   double PT4_a = analogRead(A3) / 1023.0 * 5.0;
-  double PT4 = ((PT4_a - 1) / (5.0 - 1.0)) * 1000-15.15;
+  double PT4 = ((PT4_a - 1) / (5.0 - 1.0)) * 1000;
   double PT5_a = analogRead(A4) / 1023.0 * 5.0;
-  double PT5 = ((PT5_a - 1) / (5.0 - 1.0)) * 1000-15.15;
+  double PT5 = ((PT5_a - 1) / (5.0 - 1.0)) * 1000;
   
 
   // LOAD CELL CALIBRATION
